@@ -1,3 +1,5 @@
+import java.util.*;
+
 class Ride {
     double distance;
     double time;
@@ -7,7 +9,6 @@ class Ride {
         this.time = time;
     }
 }
-
 class InvoiceSummary {
     private int totalRides;
     private double totalFare;
@@ -28,36 +29,65 @@ class InvoiceSummary {
     }
 }
 
-public class CabInvoiceGenerator {
+class RideRepository {
+    private Map<String, List<Ride>> userRides = new HashMap<>();
 
+    public void addRides(String userId, Ride[] rides) {
+        userRides.put(userId, Arrays.asList(rides));
+    }
+
+    public Ride[] getRides(String userId) {
+        List<Ride> rides = userRides.get(userId);
+        return rides == null ? new Ride[0] : rides.toArray(new Ride[0]);
+    }
+}
+
+class InvoiceService {
     private static final double COST_PER_KILOMETER = 10.0;
     private static final double COST_PER_MINUTE = 1.0;
     private static final double MINIMUM_FARE = 5.0;
 
+    private RideRepository rideRepository;
+
+    public InvoiceService(RideRepository rideRepository) {
+        this.rideRepository = rideRepository;
+    }
 
     public double calculateFare(double distance, double time) {
         double totalFare = (distance * COST_PER_KILOMETER) + (time * COST_PER_MINUTE);
         return Math.max(totalFare, MINIMUM_FARE);
     }
 
-    public InvoiceSummary calculateFareForMultipleRides(Ride[] rides) {
+    public InvoiceSummary getInvoiceSummary(String userId) {
+        Ride[] rides = rideRepository.getRides(userId);
         double totalFare = 0.0;
         for (Ride ride : rides) {
             totalFare += calculateFare(ride.distance, ride.time);
         }
         return new InvoiceSummary(rides.length, totalFare);
     }
+}
 
+public class CabInvoiceGenerator {
     public static void main(String[] args) {
-        CabInvoiceGenerator invoice = new CabInvoiceGenerator();
+        RideRepository repository = new RideRepository();
+        InvoiceService invoiceService = new InvoiceService(repository);
 
-        Ride[] rides = {
+        repository.addRides("user1", new Ride[] {
                 new Ride(2.0, 5),
-                new Ride(0.1, 1),
-                new Ride(5.0, 10)
-        };
+                new Ride(0.1, 1)
+        });
 
-        InvoiceSummary summary = invoice.calculateFareForMultipleRides(rides);
-        System.out.println(summary);
+        repository.addRides("user2", new Ride[] {
+                new Ride(5.0, 10),
+                new Ride(3.0, 5),
+                new Ride(0.2, 2)
+        });
+
+        System.out.println("=== Invoice for user1 ===");
+        System.out.println(invoiceService.getInvoiceSummary("user1"));
+
+        System.out.println("\n=== Invoice for user2 ===");
+        System.out.println(invoiceService.getInvoiceSummary("user2"));
     }
 }

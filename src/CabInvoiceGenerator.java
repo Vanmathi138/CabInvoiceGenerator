@@ -8,24 +8,44 @@ class Ride {
     }
 }
 
+class InvoiceSummary {
+    private int totalRides;
+    private double totalFare;
+    private double averageFarePerRide;
+
+    public InvoiceSummary(int totalRides, double totalFare) {
+        this.totalRides = totalRides;
+        this.totalFare = totalFare;
+        this.averageFarePerRide = totalFare / totalRides;
+    }
+
+    @Override
+    public String toString() {
+        return "Invoice Summary:\n" +
+                "Total Rides: " + totalRides + "\n" +
+                "Total Fare: Rs. " + totalFare + "\n" +
+                "Average Fare Per Ride: Rs. " + String.format("%.2f", averageFarePerRide);
+    }
+}
+
 public class CabInvoiceGenerator {
+
     private static final double COST_PER_KILOMETER = 10.0;
     private static final double COST_PER_MINUTE = 1.0;
     private static final double MINIMUM_FARE = 5.0;
 
-    //calculate fare
+
     public double calculateFare(double distance, double time) {
         double totalFare = (distance * COST_PER_KILOMETER) + (time * COST_PER_MINUTE);
         return Math.max(totalFare, MINIMUM_FARE);
     }
 
-    // Step 2
-    public double calculateFareForMultipleRides(Ride[] rides) {
+    public InvoiceSummary calculateFareForMultipleRides(Ride[] rides) {
         double totalFare = 0.0;
         for (Ride ride : rides) {
             totalFare += calculateFare(ride.distance, ride.time);
         }
-        return totalFare;
+        return new InvoiceSummary(rides.length, totalFare);
     }
 
     public static void main(String[] args) {
@@ -37,7 +57,7 @@ public class CabInvoiceGenerator {
                 new Ride(5.0, 10)
         };
 
-        double totalFare = invoice.calculateFareForMultipleRides(rides);
-        System.out.println("Total Fare for all rides: Rs. " + totalFare);
+        InvoiceSummary summary = invoice.calculateFareForMultipleRides(rides);
+        System.out.println(summary);
     }
 }

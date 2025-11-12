@@ -1,14 +1,32 @@
 import java.util.*;
 
+enum RideType {
+    NORMAL(10.0, 1.0, 5.0),
+    PREMIUM(15.0, 2.0, 20.0);
+
+    public final double costPerKm;
+    public final double costPerMinute;
+    public final double minFare;
+
+    RideType(double costPerKm, double costPerMinute, double minFare) {
+        this.costPerKm = costPerKm;
+        this.costPerMinute = costPerMinute;
+        this.minFare = minFare;
+    }
+}
+
 class Ride {
     double distance;
     double time;
+    RideType rideType;
 
-    public Ride(double distance, double time) {
+    public Ride(double distance, double time, RideType rideType) {
         this.distance = distance;
         this.time = time;
+        this.rideType = rideType;
     }
 }
+
 class InvoiceSummary {
     private int totalRides;
     private double totalFare;
@@ -43,45 +61,39 @@ class RideRepository {
 }
 
 class InvoiceService {
-    private static final double COST_PER_KILOMETER = 10.0;
-    private static final double COST_PER_MINUTE = 1.0;
-    private static final double MINIMUM_FARE = 5.0;
-
     private RideRepository rideRepository;
 
     public InvoiceService(RideRepository rideRepository) {
         this.rideRepository = rideRepository;
     }
-
-    public double calculateFare(double distance, double time) {
-        double totalFare = (distance * COST_PER_KILOMETER) + (time * COST_PER_MINUTE);
-        return Math.max(totalFare, MINIMUM_FARE);
+    public double calculateFare(Ride ride) {
+        double totalFare = (ride.distance * ride.rideType.costPerKm) + (ride.time * ride.rideType.costPerMinute);
+        return Math.max(totalFare, ride.rideType.minFare);
     }
 
     public InvoiceSummary getInvoiceSummary(String userId) {
         Ride[] rides = rideRepository.getRides(userId);
         double totalFare = 0.0;
         for (Ride ride : rides) {
-            totalFare += calculateFare(ride.distance, ride.time);
+            totalFare += calculateFare(ride);
         }
         return new InvoiceSummary(rides.length, totalFare);
     }
 }
-
 public class CabInvoiceGenerator {
     public static void main(String[] args) {
         RideRepository repository = new RideRepository();
         InvoiceService invoiceService = new InvoiceService(repository);
 
         repository.addRides("user1", new Ride[] {
-                new Ride(2.0, 5),
-                new Ride(0.1, 1)
+                new Ride(2.0, 5, RideType.NORMAL),
+                new Ride(0.1, 1, RideType.PREMIUM)
         });
 
         repository.addRides("user2", new Ride[] {
-                new Ride(5.0, 10),
-                new Ride(3.0, 5),
-                new Ride(0.2, 2)
+                new Ride(5.0, 10, RideType.PREMIUM),
+                new Ride(3.0, 5, RideType.NORMAL),
+                new Ride(0.2, 2, RideType.NORMAL)
         });
 
         System.out.println("=== Invoice for user1 ===");
